@@ -1,0 +1,21 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::yt-pipeline-bronze-<yourname>",
+        "arn:aws:s3:::yt-pipeline-bronze-<yourname>/*",
+        "arn:aws:s3:::yt-pipeline-silver-<yourname>",
+        "arn:aws:s3:::yt-pipeline-silver-<yourname>/*",
+        "arn:aws:s3:::yt-pipeline-gold-<yourname>",
+        "arn:aws:s3:::yt-pipeline-gold-<yourname>/*"
+      ]
+    }
+  ]
+}
