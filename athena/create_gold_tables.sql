@@ -1,4 +1,3 @@
-
 -- ============================================================
 -- YouTube Trending Data Pipeline
 -- Gold Layer - Analytics Tables
@@ -8,27 +7,34 @@
 --   Transform the Unified Silver dataset into analytics-ready
 --   Gold datasets stored as Parquet in Amazon S3.
 --
--- Architecture:
+-- Final architecture:
 --
---   Silver
---      |
---      v
---   Athena SQL / CTAS
---      |
---      +--------------------+
---      |                    |
---      v                    v
---   Gold S3             Glue Catalog
---      |
---      +------------------------------+
---      |              |               |
---      v              v               v
--- trending_analytics  channel_analytics  category_analytics
+--   Unified Silver
+--        |
+--        v
+--   Amazon Athena SQL / CTAS
+--        |
+--        +-----------------------------+
+--        |              |              |
+--        v              v              v
+--   Trending        Channel        Category
+--   Analytics       Analytics      Analytics
+--        |              |              |
+--        +--------------+--------------+
+--                       |
+--                       v
+--                 Gold S3 Parquet
 --
--- IMPORTANT:
---   AWS Glue ETL was originally planned for this transformation.
---   Due to Glue access restrictions in the AWS account, the
---   final implementation uses Athena CTAS instead.
+-- Note:
+--   AWS Glue ETL was originally planned for the Silver-to-Gold
+--   transformation. Due to Glue access restrictions in the AWS
+--   account, the final implementation uses Athena CTAS.
+--
+-- Gold bucket:
+--   yt-data-pipeline-gold-ap-south-1-dev-01
+--
+-- Silver source:
+--   trending_silver_unified
 --
 -- ============================================================
 
@@ -38,10 +44,10 @@
 -- TRENDING ANALYTICS
 -- ============================================================
 --
--- Provides regional summary metrics for the unified dataset.
+-- Regional summary of the unified Silver data.
 --
 -- Metrics:
---   - total videos
+--   - total rows
 --   - unique videos
 --   - total views
 --   - total likes
@@ -61,7 +67,7 @@ WITH (
     format = 'PARQUET',
     format_version = 2,
     external_location =
-        's3://YOUR-GOLD-BUCKET/youtube/trending_analytics/',
+        's3://yt-data-pipeline-gold-ap-south-1-dev-01/youtube/trending_analytics/',
     write_compression = 'SNAPPY',
     partitioned_by = ARRAY['region']
 )
@@ -98,16 +104,17 @@ GROUP BY region;
 -- CHANNEL ANALYTICS
 -- ============================================================
 --
--- Provides performance metrics for channels within each region.
+-- Channel-level performance metrics within each region.
 --
 -- Metrics:
---   - number of videos
+--   - distinct videos
+--   - total observations
 --   - total views
 --   - total likes
 --   - total comments
 --   - average views
---   - maximum views
---   - number of distinct categories
+--   - peak views
+--   - number of categories
 --
 -- ============================================================
 
@@ -119,7 +126,7 @@ WITH (
     format = 'PARQUET',
     format_version = 2,
     external_location =
-        's3://YOUR-GOLD-BUCKET/youtube/channel_analytics/',
+        's3://yt-data-pipeline-gold-ap-south-1-dev-01/youtube/channel_analytics/',
     write_compression = 'SNAPPY',
     partitioned_by = ARRAY['region']
 )
@@ -158,10 +165,10 @@ GROUP BY
 -- CATEGORY ANALYTICS
 -- ============================================================
 --
--- Provides category-level performance metrics.
+-- Category-level performance metrics within each region.
 --
 -- Metrics:
---   - video count
+--   - total observations
 --   - unique videos
 --   - total views
 --   - total likes
@@ -179,7 +186,7 @@ WITH (
     format = 'PARQUET',
     format_version = 2,
     external_location =
-        's3://YOUR-GOLD-BUCKET/youtube/category_analytics/',
+        's3://yt-data-pipeline-gold-ap-south-1-dev-01/youtube/category_analytics/',
     write_compression = 'SNAPPY',
     partitioned_by = ARRAY['region']
 )
